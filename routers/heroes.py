@@ -2,7 +2,8 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlmodel import Session, select
 from typing import List
 
-from database import get_session
+from database import get_session, get_async_session
+from sqlalchemy.ext.asyncio import AsyncSession
 from models.models import Hero
 from schemas.schemas import HeroCreate, HeroRead
 
@@ -59,3 +60,9 @@ def delete_hero(hero_id: int, session: Session = Depends(get_session)):
     session.delete(hero)
     session.commit()
     return None
+
+@router.get("/heroes/async/", response_model=List[HeroRead])
+async def read_heroes_async(session: AsyncSession = Depends(get_async_session)):
+    result = await session.execute(select(Hero))
+    heroes = result.scalars().all()
+    return heroes
